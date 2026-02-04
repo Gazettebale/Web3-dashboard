@@ -30,7 +30,7 @@ Aucune installation requise ! C'est une application statique pure :
 
 ```bash
 # Cloner le repository
-git clone https://github.com/votre-username/web3-dashboard.git
+git clone https://github.com/Gazettebale/web3-dashboard.git
 
 # Ouvrir le fichier
 cd web3-dashboard
