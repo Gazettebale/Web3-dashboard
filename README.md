@@ -1,13 +1,13 @@
-# ⚡ Web3 Dashboard - Airdrop Hunter
+# ⚡ Web3 Dashboard
 
-> Your personal command center for airdrop hunting and DeFi management
+> Your personal command center for tracking and organizing multi-chain onchain activities
 
-An elegant and minimalist dashboard to track your Web3 activities, manage your airdrop farming sites, and visualize your daily activity. 100% client-side, no database required.
+An elegant and minimalist dashboard to track your Web3 activities, manage your favorite protocols, and visualize your daily onchain interactions. 100% client-side, no database required.
 
 ## ✨ Features
 
 ### 🎯 Site Management
-- **Organize by categories**: Create custom categories (Airdrop Farming, DEX, Staking, etc.)
+- **Organize by categories**: Create custom categories (DEX, Staking, Bridges, etc.)
 - **Multiple statuses**: Active, Completed, Paused
 - **Daily tracking**: Automatically mark visited sites (✅)
 - **Custom descriptions**: Add notes for each protocol
@@ -68,7 +68,7 @@ That's it! No server needed.
 
 ### Create a category
 1. Click **"+ New Category"**
-2. Name your category (e.g., "🌉 Bridge Farming")
+2. Name your category (e.g., "🌉 Cross-chain Bridges")
 3. Add sites to this category
 
 ### Track your activity
@@ -151,10 +151,10 @@ function applyTranslations() { /* ... */ }
 
 ## 💡 Use Cases
 
-- **Airdrop farmers**: Daily tracking of testnet protocols
-- **DeFi users**: Monitor staking/farming platforms
-- **NFT traders**: Organize marketplaces and mint sites
-- **Crypto researchers**: Keep tabs on new Web3 projects
+- **Multi-chain users**: Daily tracking of protocols across different blockchains
+- **DeFi enthusiasts**: Monitor staking, liquidity, and yield platforms
+- **NFT collectors**: Organize marketplaces and mint sites
+- **Web3 builders**: Keep tabs on projects and protocols you're testing
 
 ## 🤝 Contribution
 
@@ -180,7 +180,7 @@ MIT License - Use, modify, share freely!
 
 ## 🌟 Show Your Support
 
-If this project helps you with your airdrop hunting, feel free to:
+If this project helps you organize your Web3 activities, feel free to:
 - ⭐ Star the repo
 - 🐦 Share on Twitter/X
 - 🔄 Fork for your own needs
