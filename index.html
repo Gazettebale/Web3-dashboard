@@ -80,7 +80,13 @@
         .site-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary)); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease; }
         .site-card:hover::before { transform: scaleX(1); }
         .site-card:hover { transform: translateY(-4px); border-color: var(--accent-primary); box-shadow: 0 8px 24px rgba(0, 255, 136, 0.15); }
-        .site-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .site-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 1rem; }
+        .drag-handle { cursor: grab; color: var(--text-secondary); font-size: 1rem; line-height: 1; padding: 0.15rem 0.25rem; user-select: none; opacity: 0.35; transition: opacity 0.2s ease; flex-shrink: 0; }
+        .site-card:hover .drag-handle { opacity: 0.9; }
+        .drag-handle:active { cursor: grabbing; }
+        .site-card.dragging { opacity: 0.4; }
+        .site-card.drag-over { border-color: var(--accent-primary); box-shadow: 0 0 0 2px var(--accent-primary); }
+        .sites-grid.drag-over-empty { outline: 2px dashed var(--accent-primary); outline-offset: 4px; border-radius: 8px; }
         .site-name { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem; }
         .site-url { font-size: 0.8rem; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .site-description { color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; margin-bottom: 1rem; }
@@ -264,6 +270,7 @@
                 category: "Catégorie *", cancel: "Annuler", save: "Sauvegarder",
                 newCategoryTitle: "Nouvelle Catégorie", categoryName: "Nom de la catégorie *", create: "Créer",
                 active: "Actif", completed: "Complété", paused: "En pause", emptyCategory: "Aucun site dans cette catégorie",
+                dragHint: "Glisser pour réordonner ou changer de catégorie",
                 confirmDelete: "Supprimer ce site ?",
                 confirmDeleteCategory: "La catégorie \"{name}\" contient {count} site(s). Supprimer quand même ?",
                 confirmImport: "Importer ces données ? (Les données actuelles seront remplacées)",
@@ -282,6 +289,7 @@
                 category: "Category *", cancel: "Cancel", save: "Save",
                 newCategoryTitle: "New Category", categoryName: "Category name *", create: "Create",
                 active: "Active", completed: "Completed", paused: "Paused", emptyCategory: "No sites in this category",
+                dragHint: "Drag to reorder or move to another category",
                 confirmDelete: "Delete this site?",
                 confirmDeleteCategory: "Category \"{name}\" contains {count} site(s). Delete anyway?",
                 confirmImport: "Import this data? (Current data will be replaced)",
@@ -383,10 +391,11 @@
                             <button onclick="deleteCategory(${category.id})">🗑️</button>
                         </div>
                     </div>
-                    <div class="sites-grid">
+                    <div class="sites-grid" data-category-id="${category.id}">
                         ${category.sites.length > 0 ? category.sites.map(site => `
-                            <div class="site-card">
+                            <div class="site-card" draggable="true" data-category-id="${category.id}" data-site-id="${site.id}">
                                 <div class="site-header">
+                                    <span class="drag-handle" title="${t('dragHint')}">⠿</span>
                                     <div style="flex: 1;" onclick="visitSite(${category.id}, ${site.id})">
                                         <div class="site-name">${site.name} ${site.visitedToday ? '✅' : ''}</div>
                                         <div class="site-url">${site.url}</div>
@@ -587,6 +596,75 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') { closeSiteModal(); closeCategoryModal(); }
         });
+
+        /* ========================================
+           DRAG & DROP - Réordonner / déplacer les sites
+           ======================================== */
+        let dragSrc = null;
+
+        function clearDragStyles() {
+            document.querySelectorAll('.site-card.dragging, .site-card.drag-over').forEach(c => c.classList.remove('dragging', 'drag-over'));
+            document.querySelectorAll('.sites-grid.drag-over-empty').forEach(g => g.classList.remove('drag-over-empty'));
+        }
+
+        function reorderSite(srcCard, targetCard, targetGrid) {
+            if (!srcCard) return;
+            if (targetCard && targetCard === srcCard) return;
+
+            const srcCat = data.categories.find(c => c.id === parseInt(srcCard.dataset.categoryId));
+            if (!srcCat) return;
+            const srcIndex = srcCat.sites.findIndex(s => s.id === parseInt(srcCard.dataset.siteId));
+            if (srcIndex === -1) return;
+
+            const destCatId = targetCard ? parseInt(targetCard.dataset.categoryId)
+                            : targetGrid ? parseInt(targetGrid.dataset.categoryId) : null;
+            if (destCatId === null) return;
+            const destCat = data.categories.find(c => c.id === destCatId);
+            if (!destCat) return;
+
+            const [moved] = srcCat.sites.splice(srcIndex, 1);
+
+            let destIndex = destCat.sites.length;
+            if (targetCard) {
+                const i = destCat.sites.findIndex(s => s.id === parseInt(targetCard.dataset.siteId));
+                if (i !== -1) destIndex = i;
+            }
+            destCat.sites.splice(destIndex, 0, moved);
+            saveData();
+        }
+
+        const categoriesEl = document.getElementById('categories');
+
+        categoriesEl.addEventListener('dragstart', (e) => {
+            const card = e.target.closest('.site-card');
+            if (!card) return;
+            dragSrc = card;
+            card.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            try { e.dataTransfer.setData('text/plain', card.dataset.siteId); } catch (_) {}
+        });
+
+        categoriesEl.addEventListener('dragover', (e) => {
+            if (!dragSrc) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            const card = e.target.closest('.site-card');
+            const grid = e.target.closest('.sites-grid');
+            document.querySelectorAll('.site-card.drag-over').forEach(c => c.classList.remove('drag-over'));
+            document.querySelectorAll('.sites-grid.drag-over-empty').forEach(g => g.classList.remove('drag-over-empty'));
+            if (card && card !== dragSrc) card.classList.add('drag-over');
+            else if (grid && !card) grid.classList.add('drag-over-empty');
+        });
+
+        categoriesEl.addEventListener('drop', (e) => {
+            if (!dragSrc) return;
+            e.preventDefault();
+            reorderSite(dragSrc, e.target.closest('.site-card'), e.target.closest('.sites-grid'));
+            dragSrc = null;
+            clearDragStyles();
+        });
+
+        categoriesEl.addEventListener('dragend', () => { dragSrc = null; clearDragStyles(); });
 
         loadData();
     </script>

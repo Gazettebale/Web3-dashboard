@@ -1,0 +1,6 @@
+# Claude Code local settings (machine-specific, ne pas committer)
+.claude/settings.local.json
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
